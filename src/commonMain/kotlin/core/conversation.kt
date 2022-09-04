@@ -9,9 +9,13 @@ private val asmConversationWriter = AsmConversationWriter()
 
 fun conversation(block: ConversationBuilder.() -> Unit): CompiledConversation {
     val conversationBuilder = ConversationBuilder(asmConversationWriter)
-    val program = conversationBuilder.start { block() }
-
-    return CompiledConversation(conversationBuilder.conversationState, program)
+    try {
+        val program = conversationBuilder.start { block() }
+        return CompiledConversation(conversationBuilder.conversationState, program)
+    } catch (e:Throwable) {
+        println(conversationBuilder.conversationWriter.toString())
+        throw e
+    }
 }
 
 fun say(what:String) = conversation {

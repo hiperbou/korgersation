@@ -44,7 +44,7 @@ class MainScene(private val conversationSystem: ConversationSystem, private val 
         val minDegrees = (-16).degrees
         val maxDegrees = (+16).degrees
 
-        val imagePositions = mutableListOf(Point(300, 150), Point(720, 150), Point(880, 150))
+        val imagePositions = mutableListOf(Point(300, 150), Point(720, 150), Point(880, 150), Point(100, 500))
         val images = mutableListOf<Image>()
 
         val characterScaleOnMouseOver = 1.1
@@ -80,9 +80,11 @@ class MainScene(private val conversationSystem: ConversationSystem, private val 
 
         val offsetY = 180
 
-        val santa = characterSprite(santaAtlas, 128, 0 + offsetY, 1.0, SantaConversation.intro())
-        val boy = characterSprite(boyAtlas, 800, 32 + offsetY, -1.0, DemoConversation.test2)
-        val girl = characterSprite(girlAtlas, 1000, 64 + offsetY, -1.0, DemoConversation.test1)
+        val santa = characterSprite(santaAtlas, 128, 0 + offsetY, 1.0, SantaConversation.santaThoughts())
+        val boy = characterSprite(boyAtlas, 800, 32 + offsetY, -1.0, SantaConversation.bobConversation())
+        val girl = characterSprite(girlAtlas, 1000, 64 + offsetY, -1.0, SantaConversation.aliceConversation())
+
+        val debug = characterSprite(girlAtlas, 0, 720, 1.0, SantaConversation.debugConversation())
 
         conversationEvents.apply {
             onConversationStarts {
@@ -102,7 +104,7 @@ class MainScene(private val conversationSystem: ConversationSystem, private val 
             }
         }
 
-        conversationSystem.start(SantaConversation.intro())
+        //conversationSystem.start(SantaConversation.intro())
 
         while (true) {
             images.forEach {
