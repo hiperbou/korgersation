@@ -80,7 +80,7 @@ class MainScene(private val conversationSystem: ConversationSystem, private val 
 
         val offsetY = 180
 
-        val santa = characterSprite(santaAtlas, 128, 0 + offsetY, 1.0, DemoConversation.singleLineTest)
+        val santa = characterSprite(santaAtlas, 128, 0 + offsetY, 1.0, SantaConversation.intro())
         val boy = characterSprite(boyAtlas, 800, 32 + offsetY, -1.0, DemoConversation.test2)
         val girl = characterSprite(girlAtlas, 1000, 64 + offsetY, -1.0, DemoConversation.test1)
 
@@ -102,7 +102,7 @@ class MainScene(private val conversationSystem: ConversationSystem, private val 
             }
         }
 
-        conversationSystem.start(DemoConversation.singleLineTest)
+        conversationSystem.start(SantaConversation.intro())
 
         while (true) {
             images.forEach {
