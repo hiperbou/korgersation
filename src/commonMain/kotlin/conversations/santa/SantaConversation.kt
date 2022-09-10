@@ -1,13 +1,14 @@
 package conversations.demo
 
 import com.hiperbou.conversation.dsl.*
+import com.soywiz.korio.util.length
 import core.*
 
 class SantaConversation {
 
     companion object {
         object variables {
-            private var currentVariableIndex = 32
+            private var currentVariableIndex = 64
             private fun variable() = MemoryAddress(currentVariableIndex++)
 
             //Intro
@@ -21,7 +22,8 @@ class SantaConversation {
             val santaToldBobHisAge = variable()
 
             //Alice
-            val talkedToAlice = variable()
+            val ALICE_QUESTIONS = (1..10)
+            val talkedToAlice = ALICE_QUESTIONS.map { variable() }
         }
 
         private fun ConversationBuilder.initializeCharacters() = listOf(
@@ -187,7 +189,7 @@ class SantaConversation {
             val optionNameWrongName2 = option("I obviously know your name", 0)
             val optionNameLeave = option("I'll be back in a moment", 0)
 
-            val optionYears = (5..10).map { option("You're $it years old", 0) }
+            val optionYears = (5..10).map { option("You're $it years old", 0) }.toTypedArray()
 
             buildOptions()
 
@@ -228,7 +230,7 @@ class SantaConversation {
 
             labelAskAboutBobsAge {
                 bob - "So, how old am I?"
-                showOptions(*optionYears.toTypedArray())
+                showOptions(*optionYears)
                 halt()
             }
 
@@ -249,6 +251,7 @@ class SantaConversation {
             labelAskAboutGift {
                 bob - "What did I write in the letter I sent YOU this year?"
                 santa - "You wrote all nonesense"
+                //TODO: write a proper ending
                 halt()
             }
 
@@ -287,9 +290,8 @@ class SantaConversation {
 
             optionNameWrongName {
                 santa - "Your name is..."
-                //TODO: random name each time
-                santa - "John"
-                bob - "Ha! Nice try"
+                santa - "rnd:John|William|James|Benjamin|Henry|Michael|Alexander|Daniel|Logan|Matthew|Samuel|Christopher|Luke|Ryan|Nathan|Caleb|Jonathan|Aaron|Charles|Thomas|Jordan|Jose|Kevin|Nolan|Cooper|Elias|Juan|Luis|Miles|Vincent|Leonardo|Max|Wesley|Antonio|Victor|Carlos|Alan|Oscar|Warren|Graham"
+                bob - "rnd:Ha! Nice try|Not even close|Almost|Not really|Are you sure?"
                 labelShowMainOptions.goto()
             }
 
@@ -310,7 +312,7 @@ class SantaConversation {
             optionNameRightName {
                 santa - "Your name is..."
                 santa - "Bob"
-                bob - "Whoa!"
+                bob - "Woah!"
                 alice - "That was impressive, honestly."
                 variables.santaToldBobHisName.set(true)
                 labelShowMainOptions.goto()
@@ -320,25 +322,272 @@ class SantaConversation {
         fun aliceConversation() = conversation {
             val (santa, bob, alice) = initializeCharacters()
 
-            val optionDebugOne = option("Bob's name", 1)
+            val optionAliceQuestioning = option("So...", 1)
+            val optionAskAboutBobsName = option("Bob's name", 0)
+
+            //How do you deliver all the presents in one night
+            val optionQuestion0 = arrayOf(
+                option("Magic", 0),
+                option("Timezones", 0),
+                option("I have some help from others", 0),
+                option("I dont't", 0)
+            )
+            //Has anyone ever seen you?
+            val optionQuestion1 = arrayOf(
+                option("All the time", 0),
+                option("Sometimes", 0),
+                option("This is the first time", 0),
+            )
+            //Do all the presents for all the children in the world fit on the sleigh?
+            val optionQuestion2 = arrayOf(
+                option("It's Magic", 0),
+                option("It's bigger on the inside", 0),
+                option("I need to go home to stock up", 0),
+            )
+            //How can you come down the chimney and not get burned?
+            val optionQuestion3 = arrayOf(
+                option("Did you heard about magic?", 0),
+                option("I got other ways to get in", 0),
+                option("I actually get burned", 0),
+            )
+            //How do you really know if kids have been bad or good?
+            val optionQuestion4 = arrayOf(
+                option("I see and hear everything", 0),
+                option("I got reports for each one of you", 0),
+                option("I don't really know all the times", 0),
+            )
+            //How old is Santa Claus?
+            //option("break",0)
+            //Have you ever been convicted of breaking & entering?
+            //How many carrots do your reindeer have?
+            //I don't know what else to ask
+
             val optionLeave = option("Leave", 1)
             buildOptions()
 
+            val labelAliceQuestions = variables.ALICE_QUESTIONS.map { Label() }
             val labelShowOptions = Label()
 
-            labelShowOptions.gotoIfTrue(variables.talkedToAlice)
+            optionAskAboutBobsName.enableIfTrue(variables.guessedName)
+
+            variables.talkedToAlice.reversed().forEachIndexed { index, it ->
+                labelAliceQuestions[variables.ALICE_QUESTIONS.length - index - 1].gotoIfTrue(it)
+            }
 
             santa - "Hello"
             - alice
             - "I'm not easily fooled, unlike my brother"
             - "So you better defend yourself right now"
-            variables.talkedToAlice.set(true)
+            variables.talkedToAlice[0].set(true)
+
+            //labelShowOptions.goto()
+            labelAliceQuestions.first().goto()
+
+            optionQuestion0.forEachIndexed{ index, option ->
+                when(index) {
+                    0 -> option {
+                        santa - "Magic!"
+                        alice - "Sure. As if such thing existed."
+                        labelShowOptions.goto()
+                    }
+                    1 -> option {
+                        santa - "Have you ever heard of timezones?"
+                        alice - "They're so annoying."
+                        santa - "Yes, but I have 24 hours to deliver the presents to everyone."
+                        alice - "I see..."
+                        labelShowOptions.goto()
+                    }
+                    2 -> option {
+                        santa - it.text
+                        alice - "How is that?"
+                        santa - "Sometimes it's difficult for me to deliver EVERY present myself"
+                        santa - "I am old, you know?"
+                        labelShowOptions.goto()
+                    }
+                    3 -> option {
+                        santa - it.text
+                        alice - "..."
+                        bob - "What?"
+                        alice - "Nothing"
+                        labelShowOptions.goto()
+                    }
+                    else -> option {
+                        santa - it.text
+                        alice - "Uh-huh?"
+                        labelShowOptions.goto()
+                    }
+                }
+            }
+            optionQuestion1.forEachIndexed{ index, option ->
+                when(index) {
+                    0 -> option {
+                        santa - "All the time!"
+                        santa - "How else I am going to be known if I wont let people see me from time to time?"
+                        alice - "Makes sense"
+                        labelShowOptions.goto()
+                    }
+                    1 -> option {
+                        santa - "Sometimes, although I try not to..."
+                        alice - "I see..."
+                        labelShowOptions.goto()
+                    }
+                    2 -> option {
+                        santa - it.text
+                        bob - "We caught you!"
+                        alice - "It was so foolish of you"
+                        labelShowOptions.goto()
+                    }
+                    else -> option {
+                        santa - it.text
+                        alice - "Uh-huh?"
+                        labelShowOptions.goto()
+                    }
+                }
+            }
+            optionQuestion2.forEachIndexed{ index, option ->
+                when(index) {
+                    0 -> option {
+                        santa - "Magic!"
+                        alice - "Is that a spell I could learn?"
+                        labelShowOptions.goto()
+                    }
+                    1 -> option {
+                        santa - it.text
+                        alice - "What kind of technology is that?"
+                        santa - "It's some kind of dimensionally transcendental one"
+                        labelShowOptions.goto()
+                    }
+                    2 -> option {
+                        santa - it.text
+                        alice - "Wouldn't that take you too much time?"
+                        labelShowOptions.goto()
+                    }
+                    else -> option {
+                        santa - it.text
+                        alice - "Uh-huh?"
+                        labelShowOptions.goto()
+                    }
+                }
+            }
+            optionQuestion3.forEachIndexed{ index, option ->
+                when(index) {
+                    0 -> option {
+                        santa - it.text
+                        santa - "It also helps when I get stuck inside the chimney"
+                        alice - "I'm sure that happens a lot to you"
+                        labelShowOptions.goto()
+                    }
+                    1 -> option {
+                        santa - it.text
+                        alice - "Breaking the windows?"
+                        santa - "Do you see any broken window around?"
+                        labelShowOptions.goto()
+                    }
+                    2 -> option {
+                        santa - it.text
+                        alice - "Sure"
+                        labelShowOptions.goto()
+                    }
+                    else -> option {
+                        santa - it.text
+                        alice - "Uh-huh?"
+                        labelShowOptions.goto()
+                    }
+                }
+            }
+            optionQuestion4.forEachIndexed{ index, option ->
+                when(index) {
+                    0 -> option {
+                        santa - it.text
+                        alice - "Like... Superman?"
+                        santa - "Y.. Yes!"
+                        bob - "Woah"
+                        labelShowOptions.goto()
+                    }
+                    1 -> option {
+                        santa - it.text
+                        alice - "I knew it"
+                        alice - "It's our parents or our teachers?"
+                        santa - "Everyone can report to me anonymously"
+                        labelShowOptions.goto()
+                    }
+                    2 -> option {
+                        santa - it.text
+                        alice - "So it doesn't matter if we are good or bad?"
+                        labelShowOptions.goto()
+                    }
+                    else -> option {
+                        santa - it.text
+                        alice - "Uh-huh?"
+                        labelShowOptions.goto()
+                    }
+                }
+            }
+
+            labelAliceQuestions.forEachIndexed { index, label ->
+                when(index) {
+                    0 -> label {
+                        alice - "How do you deliver all the presents in one night?"
+                        variables.talkedToAlice[index+1].set(true)
+                        showOptions(*optionQuestion0 +  optionLeave)
+                    }
+                    1 -> label {
+                        alice - "Has anyone ever seen you?"
+                        variables.talkedToAlice[index+1].set(true)
+                        showOptions(*optionQuestion1 +  optionLeave)
+                    }
+                    2 -> label {
+                        alice - "Do all the presents for all the children in the world fit on the sleigh?"
+                        variables.talkedToAlice[index+1].set(true)
+                        showOptions(*optionQuestion2 +  optionLeave)
+                    }
+                    3 -> label {
+                        alice - "How can you come down the chimney and not get burned?"
+                        variables.talkedToAlice[index+1].set(true)
+                        showOptions(*optionQuestion3 +  optionLeave)
+                    }
+                    4 -> label {
+                        alice - "How do you really know if kids have been bad or good?"
+                        variables.talkedToAlice[index+1].set(true)
+                        showOptions(*optionQuestion4 +  optionLeave)
+                    }
+                    5 -> label {
+                        alice - "How old is Santa Claus?"
+                        variables.talkedToAlice[index+1].set(true)
+                        halt()
+                    }
+                    6 -> label {
+                        alice - "Have you ever been convicted of breaking & entering?"
+                        variables.talkedToAlice[index+1].set(true)
+                        halt()
+                    }
+                    7 -> label {
+                        alice - "How many carrots do your reindeer have?"
+                        variables.talkedToAlice[index+1].set(true)
+                        halt()
+                    }
+                    8 -> label {
+                        alice - "How many elves do you have?"
+                        variables.talkedToAlice[index+1].set(true)
+                        halt()
+                    }
+                    9 -> label {
+                        alice - "I don't know what else to ask"
+                        variables.talkedToAlice.drop(1).forEach { it.set(false) }
+                        halt()
+                    }
+                }
+            }
 
             labelShowOptions {
                 showOptions()
             }
 
-            optionDebugOne {
+            optionAliceQuestioning {
+                alice - "This option"
+            }
+
+            optionAskAboutBobsName {
                 alice - "the name is bob"
                 variables.santaKnowsBobName.set(true)
             }
@@ -346,20 +595,29 @@ class SantaConversation {
             optionLeave {
 
             }
+
+
         }
 
         fun debugConversation() = conversation {
             val (santa, bob, alice) = initializeCharacters()
 
-            val optionDebugOne = option("Bob's name", 1)
+            val optionDebugZero = option("Guessed Bob's name", 1)
+            val optionDebugOne = option("Knows Bob's name", 1)
             val optionLeave = option("Leave", 1)
             buildOptions()
 
             showOptions()
 
+            optionDebugZero{
+                santa - "guessedName bob's name"
+                variables.guessedName.set(true)
+                halt()
+            }
             optionDebugOne {
                 santa - "The name is bob"
                 variables.santaKnowsBobName.set(true)
+                halt()
             }
             optionLeave {
                 halt()

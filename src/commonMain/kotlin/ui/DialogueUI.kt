@@ -74,6 +74,11 @@ private fun Container.dialogueText(
     text(what, textSize, textColor, alignment = align) { position(position.x, position.y); block() }
 }
 
+private fun String.isRandom() = startsWith("rnd:")
+private fun String.isNotRandom() = !isRandom()
+private fun String.getRandom():String{
+    return removePrefix("rnd:").split("|").random()
+}
 
 fun Stage.dialogueUIComponent(
     conversationEvents: ConversationEvents,
@@ -84,7 +89,7 @@ fun Stage.dialogueUIComponent(
             val what = conversationSystem.getText(it)
             conversationSystem.pause()
             launch {
-                say(what)
+                say(what.takeIf { it.isNotRandom() } ?: what.getRandom())
                 conversationSystem.run()
             }
         }
